@@ -40,6 +40,23 @@ for a in "$@"; do
 done
 export DEBIAN_FRONTEND=noninteractive
 APT=(apt-get -o DPkg::Lock::Timeout=900 -y)
+# apt_run ARGS… : apt-get qui patiente si apt est déjà occupé (mises à jour
+# automatiques, autre installation). DPkg::Lock::Timeout ne couvre que le verrou
+# de dpkg, pas ceux du cache et des listes : on réessaie tant qu'un autre apt tourne.
+apt_busy() { pgrep -x 'apt-get|apt|dpkg|unattended-upgr' >/dev/null || pgrep -f 'apt.systemd.daily' >/dev/null; }
+apt_run() {
+    local i
+    for i in $(seq 1 120); do
+        while apt_busy; do
+            [[ $i -eq 1 ]] && echo "   apt est occupé (mises à jour automatiques ?) : attente…"
+            sleep 5
+        done
+        "${APT[@]}" "$@" && return 0
+        apt_busy || return 1      # échec réel (paquet introuvable…) : on s'arrête
+        sleep 5
+    done
+    return 1
+}
 log() { printf '\n\033[1;34m[pi-server]\033[0m %s\n' "$*"; }
 
 # --- Configuration -------------------------------------------------------------
@@ -50,12 +67,25 @@ mkdir -p /etc/pi-server
 
 # --- Paquets / mise à jour --------------------------------------------------------
 log "Mise à jour du système"
-"${APT[@]}" update
-"${APT[@]}" -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade
-"${APT[@]}" install unattended-upgrades apt-listchanges nftables git python3 ca-certificates \
+apt_run update
+apt_run -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade
+apt_run install unattended-upgrades apt-listchanges nftables git python3 ca-certificates \
                     openssh-server avahi-daemon needrestart
 
 timedatectl set-timezone "${TIMEZONE:-Europe/Paris}" || true
+
+# --- Langue ---------------------------------------------------------------------
+# Génère la langue du système, plus celles qu'envoient habituellement les clients
+# SSH (LANG / LC_*), sinon perl et apt affichent « Setting locale failed ».
+LOC="${LOCALE:-fr_FR.UTF-8}"
+apt_run install locales
+for l in "$LOC" en_GB.UTF-8 en_US.UTF-8 fr_FR.UTF-8; do
+    sed -i -E "s/^# *(${l//./\\.} UTF-8)/\1/" /etc/locale.gen
+    grep -qE "^${l//./\\.} UTF-8" /etc/locale.gen || echo "$l UTF-8" >> /etc/locale.gen
+done
+locale-gen >/dev/null
+update-locale LANG="$LOC"
+echo "   langue : $LOC"
 
 # --- Nom d'hôte -------------------------------------------------------------------
 if [[ -n "${HOSTNAME_WANTED:-}" ]]; then

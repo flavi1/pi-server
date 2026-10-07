@@ -39,7 +39,7 @@ MAX_SIZE_GB=256
 
 OPT_DEVICE="" OPT_IMAGE="" OPT_BOOTFS="" OPT_HOSTNAME="" OPT_USER="" OPT_PASSWORD_FILE=""
 OPT_WIFI="" OPT_BT="" OPT_MODULES="" OPT_AUTOINSTALL="" OPT_SSHKEY="" OPT_YES=0 OPT_FORCE_LARGE=0
-OPT_TZ="Europe/Paris" OPT_KEYMAP="fr"
+OPT_TZ="Europe/Paris" OPT_KEYMAP="fr" OPT_LOCALE="fr_FR.UTF-8"
 
 usage() {
 cat <<EOF
@@ -58,6 +58,7 @@ Système :
   --ssh-key FICHIER|no    clé publique à autoriser en plus du mot de passe
   --timezone TZ           défaut : $OPT_TZ
   --keymap  KM            défaut : $OPT_KEYMAP
+  --locale  LOC           langue du système (défaut : $OPT_LOCALE)
   --wifi yes|no           activer la puce Wi-Fi (défaut : no)
   --bluetooth yes|no      activer le Bluetooth (défaut : no)
 Installation au premier démarrage :
@@ -86,6 +87,7 @@ while [[ $# -gt 0 ]]; do
         --ssh-key) OPT_SSHKEY="$2"; shift 2 ;;
         --timezone) OPT_TZ="$2"; shift 2 ;;
         --keymap) OPT_KEYMAP="$2"; shift 2 ;;
+        --locale) OPT_LOCALE="$2"; shift 2 ;;
         --wifi) OPT_WIFI="$2"; shift 2 ;;
         --bluetooth) OPT_BT="$2"; shift 2 ;;
         --modules) OPT_MODULES="$2"; shift 2 ;;
@@ -352,6 +354,7 @@ yaml_q() { local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; printf '"%s"' "$s"; }
     echo "hostname: $HOST"
     echo "manage_etc_hosts: true"
     echo "timezone: $(yaml_q "$OPT_TZ")"
+    echo "locale: $(yaml_q "$OPT_LOCALE")"
     echo "keyboard:"
     echo "  layout: $(yaml_q "$OPT_KEYMAP")"
     echo
@@ -433,6 +436,8 @@ if [[ "$AUTO" == yes ]]; then
         for m in "${MODULES[@]}"; do echo "    \"${MODULE_REPO[$m]}\""; done
         echo ")"
         echo "MODULES_BRANCH=\"main\""
+        echo "LOCALE=\"$OPT_LOCALE\""
+        echo "TIMEZONE=\"$OPT_TZ\""
     } > "$STAGE/pi-server/pi-server.conf"
 
     cat > "$STAGE/pi-server/init.sh" <<'INIT'

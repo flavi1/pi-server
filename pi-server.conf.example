@@ -20,6 +20,10 @@ HOSTNAME_WANTED=""
 # Fuseau horaire
 TIMEZONE="Europe/Paris"
 
+# Langue du système (messages, dates). en_GB, en_US et fr_FR sont toujours
+# générées pour que les sessions SSH n'affichent pas d'avertissement.
+LOCALE="fr_FR.UTF-8"
+
 # Réseau local autorisé pour SSH et les services « LAN » (vide = détection auto)
 LAN4=""
 
