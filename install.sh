@@ -39,7 +39,9 @@ for a in "$@"; do
     esac
 done
 export DEBIAN_FRONTEND=noninteractive
-APT=(apt-get -o DPkg::Lock::Timeout=900 -y)
+# --no-install-recommends : seulement les dépendances strictes (carte SD de petite
+# taille ; les « recommandés » tirent des centaines de Mo inutiles ici).
+APT=(apt-get -o DPkg::Lock::Timeout=900 -o APT::Install-Recommends=false -y)
 # apt_run ARGS… : apt-get qui patiente si apt est déjà occupé (mises à jour
 # automatiques, autre installation). DPkg::Lock::Timeout ne couvre que le verrou
 # de dpkg, pas ceux du cache et des listes : on réessaie tant qu'un autre apt tourne.
@@ -196,7 +198,8 @@ EOF
 mkdir -p /var/lib/pi-server
 git -C "$HERE" rev-parse HEAD > /var/lib/pi-server/base.version 2>/dev/null || true
 
-log "Socle OK"
+apt-get clean
+log "Socle OK ($(df -Ph / | awk 'NR==2 {print $4 " libres sur " $2}'))"
 [[ $BASE_ONLY -eq 1 ]] && exit 0
 
 # --- Modules -------------------------------------------------------------------------

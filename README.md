@@ -23,6 +23,9 @@ Modules disponibles (dépôts indépendants, installables aussi sans pi-server) 
 
 ## 1. Préparer la carte SD (sur le PC)
 
+Carte SD : **8 Go minimum, 16 Go conseillés**. Le système occupe à lui seul environ
+2,5 Go ; sur une carte de 4 Go il reste trop peu de place pour les mises à jour.
+
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/flavi1/pi-server/main/prepare.sh
 bash prepare.sh
@@ -149,6 +152,12 @@ sudo pi-server remove <module>            # le retirer de la liste (ne désinsta
 
 Les fichiers de configuration (`/etc/pi-server/`, `/etc/pi-sound-server/`,
 `/etc/pi-data-server/`) ne sont jamais écrasés par une mise à jour.
+
+### Comptes
+
+- **SSH** : l'utilisateur et le mot de passe choisis dans `prepare.sh`.
+- **FTP** (pi-data-server) : le même compte par défaut — voir son README pour un
+  compte FTP séparé (`sudo passwd <compte>` pour l'activer).
 
 ## 6. Contrat avec les modules
 

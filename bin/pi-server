@@ -110,6 +110,7 @@ cmd_status() {
     echo
     echo "== Système =="
     echo "  $(. /etc/os-release; echo "$PRETTY_NAME") — noyau $(uname -r)"
+    echo "  carte SD : $(df -Ph / | awk 'NR==2 {print $3 " utilisés, " $4 " libres sur " $2}')"
     echo "  nom : $(hostname) (ssh $(logname 2>/dev/null || echo utilisateur)@$(hostname).local) — IP : $(hostname -I | xargs)"
     local last=/var/log/unattended-upgrades/unattended-upgrades.log
     [[ -f "$last" ]] && echo "  dernière mise à jour auto : $(grep -h 'INFO' "$last" | tail -n1 | cut -c1-90)"
