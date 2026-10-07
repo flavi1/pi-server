@@ -1,0 +1,28 @@
+# /etc/pi-server/pi-server.conf
+# Lu par install.sh et par la commande « pi-server ». Format : bash.
+
+# Dépôt de pi-server lui-même (cloné dans /opt/pi-server)
+PI_SERVER_REPO="https://github.com/flavi1/pi-server.git"
+PI_SERVER_BRANCH="main"
+
+# Modules installés : un dépôt git par module, cloné dans /opt/<nom-du-dépôt>
+# et installé par son propre « install.sh ».
+# Ajouter :  sudo pi-server add sound|data|<url>
+MODULES=(
+    "https://github.com/flavi1/pi-data-server.git"
+    "https://github.com/flavi1/pi-sound-server.git"
+)
+MODULES_BRANCH="main"
+
+# Nom d'hôte (vide = ne pas toucher ; défini au premier démarrage par prepare.sh)
+HOSTNAME_WANTED=""
+
+# Fuseau horaire
+TIMEZONE="Europe/Paris"
+
+# Réseau local autorisé pour SSH et les services « LAN » (vide = détection auto)
+LAN4=""
+
+# Redémarrage automatique après une mise à jour qui l'exige (noyau, firmware)
+AUTO_REBOOT="yes"
+AUTO_REBOOT_TIME="04:30"

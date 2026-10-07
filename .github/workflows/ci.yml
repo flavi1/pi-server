@@ -1,0 +1,44 @@
+# Intégration continue : à chaque push et pull request.
+# Résultat : onglet « Actions » du dépôt (et coche verte/croix rouge sur chaque commit).
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:        # bouton « Run workflow » dans l'onglet Actions
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntaxe bash
+        run: for f in prepare.sh install.sh bin/pi-server tests/*.sh; do bash -n "$f"; done
+      - name: ShellCheck
+        run: shellcheck -S warning prepare.sh install.sh bin/pi-server tests/*.sh
+
+  prepare:
+    name: prepare.sh (bootfs + dd sur loop)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dosfstools fdisk xz-utils python3-yaml cloud-init
+      - name: Partition de boot factice
+        run: bash tests/test-prepare.sh bootfs
+      - name: Image factice écrite par dd sur /dev/loopN
+        run: sudo bash tests/test-prepare.sh dd
+
+  firewall:
+    name: Pare-feu (nft -c)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y nftables
+      - run: sudo bash tests/test-firewall.sh

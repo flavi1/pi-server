@@ -1,0 +1,29 @@
+// pi-server : mises à jour automatiques.
+// Ce fichier est lu après 50unattended-upgrades et complète/écrase ses valeurs.
+
+// Sources autorisées : sécurité Debian, stable Debian, point releases,
+// et l'archive Raspberry Pi (noyau, firmware, outils Pi).
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename},label=Debian";
+        "origin=Debian,codename=${distro_codename}-updates";
+        "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+        "origin=Debian,codename=${distro_codename},label=Debian-Security";
+        "origin=Raspberry Pi Foundation,codename=${distro_codename}";
+};
+
+// Ne jamais rester bloqué sur une question de dpkg
+Dpkg::Options {
+        "--force-confdef";
+        "--force-confold";
+};
+
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+
+// Redémarrage automatique si un noyau / firmware l'exige (coupure du son ~1 min)
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:30";
+
+Unattended-Upgrade::SyslogEnable "true";
