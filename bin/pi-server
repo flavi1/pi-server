@@ -148,6 +148,12 @@ cmd_install_modules() {
     local m
     for m in "${MODULES[@]}"; do
         clone_if_needed "$m"
+        # Module jamais installé avec succès (premier démarrage interrompu…) :
+        # on prend sa dernière version avant de réessayer. Un module déjà installé
+        # n'est mis à jour que par « pi-server update ».
+        if [[ ! -f "/var/lib/pi-server/$(mod_name "$m").version" ]]; then
+            pull "$(mod_dir "$m")"
+        fi
         install_module "$m" "$@"
     done
 }
