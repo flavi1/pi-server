@@ -17,6 +17,15 @@ stockage persistant externe (SSD USB ou clé déclaré dans `/etc/fstab`) pour :
 - [ ] décider : disque persistant obligatoire ou facultatif (repli sur la SD ?)
 - [ ] documenter la sauvegarde / restauration de `/etc/pi-*` et des états
 
+## Place sur la carte SD
+
+- [x] apt sans paquets recommandés ni traductions, cache vidé après installation
+- [x] journal plafonné (`JOURNAL_MAX`, 50 Mo)
+- [x] `files/slim.sh` : retrait de Raspberry Pi Connect, firmwares de clés USB
+      tierces, compilateurs / en-têtes noyau (sans DKMS), architecture armhf
+- [ ] option : retirer le noyau de l'autre modèle (Pi 4 : `linux-image-*-rpi-2712`,
+      Pi 5 : `*-rpi-v8`) — la carte ne démarrerait plus sur l'autre modèle
+
 ## Idées
 
 - [ ] `pi-server backup` : archive de `/etc/pi-server`, `/etc/pi-sound-server`,

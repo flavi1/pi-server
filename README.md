@@ -23,8 +23,9 @@ Modules disponibles (dépôts indépendants, installables aussi sans pi-server) 
 
 ## 1. Préparer la carte SD (sur le PC)
 
-Carte SD : **8 Go minimum, 16 Go conseillés**. Le système occupe à lui seul environ
-2,5 Go ; sur une carte de 4 Go il reste trop peu de place pour les mises à jour.
+Carte SD : **4 Go minimum** (environ 1 Go libre après installation complète),
+8 Go ou plus conseillés. Le socle allège Raspberry Pi OS Lite pour un serveur sans
+écran (`SLIM`, voir `files/slim.sh --dry-run`) et plafonne le journal système.
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/flavi1/pi-server/main/prepare.sh

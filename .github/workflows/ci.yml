@@ -17,9 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Syntaxe bash
-        run: for f in prepare.sh install.sh bin/pi-server tests/*.sh; do bash -n "$f"; done
+        run: for f in prepare.sh install.sh bin/pi-server files/slim.sh tests/*.sh; do bash -n "$f"; done
       - name: ShellCheck
-        run: shellcheck -S warning prepare.sh install.sh bin/pi-server tests/*.sh
+        run: shellcheck -S warning prepare.sh install.sh bin/pi-server files/slim.sh tests/*.sh
+      - name: Allègement (simulation seulement, rien n'est retiré)
+        run: sudo bash files/slim.sh --dry-run
 
   prepare:
     name: prepare.sh (bootfs + dd sur loop)

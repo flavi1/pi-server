@@ -30,3 +30,13 @@ LAN4=""
 # Redémarrage automatique après une mise à jour qui l'exige (noyau, firmware)
 AUTO_REBOOT="yes"
 AUTO_REBOOT_TIME="04:30"
+
+# Allègement pour petite carte SD (files/slim.sh ; essai : sudo bash /opt/pi-server/files/slim.sh --dry-run)
+SLIM="yes"
+SLIM_RPI_CONNECT="yes"     # retirer Raspberry Pi Connect (accès à distance via le cloud)
+SLIM_FIRMWARE="yes"        # retirer les firmwares de clés Wi-Fi/BT USB tierces (l'intégré est gardé)
+SLIM_TOOLCHAIN="yes"       # retirer compilateurs + en-têtes noyau (si aucun module DKMS)
+SLIM_ARMHF="yes"           # retirer l'architecture 32 bits si inutilisée (listes apt ÷ 2)
+
+# Taille maximale du journal système sur la carte
+JOURNAL_MAX="50M"

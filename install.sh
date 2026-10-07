@@ -92,8 +92,33 @@ mkdir -p /etc/pi-server
 . /etc/pi-server/pi-server.conf
 
 # --- Paquets / mise à jour --------------------------------------------------------
+# --- apt : jamais de paquets « recommandés », pas de traductions -------------------
+# Vaut aussi pour les mises à jour automatiques : une mise à jour ne doit pas tirer
+# des dizaines de Mo de suggestions sur une petite carte SD.
+cat > /etc/apt/apt.conf.d/50pi-server-slim <<'APTCONF'
+// pi-server : installations minimales
+APT::Install-Recommends "false";
+APT::Install-Suggests "false";
+Acquire::Languages "none";
+APTCONF
+
+# --- Journal système plafonné (sinon jusqu'à 10 % de la carte) ----------------------
+mkdir -p /etc/systemd/journald.conf.d
+cat > /etc/systemd/journald.conf.d/50-pi-server.conf <<JCONF
+# pi-server : journal plafonné (voir TODO.md : journal hors carte SD)
+[Journal]
+SystemMaxUse=${JOURNAL_MAX:-50M}
+RuntimeMaxUse=30M
+JCONF
+systemctl restart systemd-journald || true
+
 log "Mise à jour du système"
+apt-get clean
 apt_run update
+if [[ "${SLIM:-yes}" == yes ]]; then
+    bash "$F/slim.sh"
+    apt_run update
+fi
 apt_run -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade
 apt_run install unattended-upgrades apt-listchanges nftables git python3 ca-certificates \
                     openssh-server avahi-daemon needrestart
