@@ -245,6 +245,28 @@ choose_device() {
     echo "${names[$((n-1))]}"
 }
 
+# dd_progress TAILLE : transforme la sortie « status=progress » de dd en barre
+#   [##########--------]  52 %   1440 / 2768 Mo   28,3 MB/s
+dd_progress() {
+    local total="$1" line b p n bar last=""
+    while IFS= read -r -d $'\r' line || [[ -n "$line" ]]; do
+        line="${line%$'\n'}"; line="${line##*$'\n'}"
+        [[ "$line" =~ ^([0-9]+)\ (bytes|octets) ]] || { [[ -n "$line" ]] && last="$line"; continue; }
+        b="${BASH_REMATCH[1]}"
+        if (( total > 0 )); then
+            p=$(( b * 100 / total )); (( p > 100 )) && p=100
+            n=$(( p * 40 / 100 ))
+            printf -v bar '%*s' "$n" ''; bar="${bar// /#}"
+            printf '\r   [%-40s] %3d %%  %6d / %d Mo  %-12s' "$bar" "$p" $(( b / 1048576 )) $(( total / 1048576 )) "${line##*, }"
+        else
+            printf '\r   %6d Mo écrits  %-12s' $(( b / 1048576 )) "${line##*, }"
+        fi
+    done
+    echo
+    [[ "$last" == *rror* || "$last" == *rreur* ]] && echo "   $last"
+    return 0
+}
+
 if [[ -z "$OPT_BOOTFS" ]]; then
     # --- Image ---------------------------------------------------------------
     if [[ -n "$OPT_IMAGE" ]]; then
@@ -308,9 +330,12 @@ if [[ -z "$OPT_BOOTFS" ]]; then
     # --- Écriture ---------------------------------------------------------------
     info "Écriture de l'image sur $DEV (quelques minutes)…"
     if [[ "$IMG" == *.xz ]]; then
-        xz -dc "$IMG" | $SUDO dd of="$DEV" bs=4M iflag=fullblock conv=fsync status=progress
+        TOTAL="$(xz --robot --list "$IMG" | awk '$1=="totals" {print $5}')"
+        xz -dc "$IMG" | $SUDO dd of="$DEV" bs=4M iflag=fullblock conv=fsync status=progress 2>&1 \
+            | dd_progress "${TOTAL:-0}"
     else
-        $SUDO dd if="$IMG" of="$DEV" bs=4M conv=fsync status=progress
+        $SUDO dd if="$IMG" of="$DEV" bs=4M conv=fsync status=progress 2>&1 \
+            | dd_progress "$(stat -c %s "$IMG")"
     fi
     sync
     # relire la table de partitions (partprobe = paquet parted ; partx = util-linux)
