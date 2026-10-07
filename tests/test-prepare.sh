@@ -18,7 +18,11 @@ cleanup() {
 trap cleanup EXIT
 FAILS=0
 ok()   { echo "  ok   : $*"; }
-fail() { echo "  FAIL : $*"; FAILS=$((FAILS+1)); }
+fail() {
+    echo "  FAIL : $*"; FAILS=$((FAILS+1))
+    [[ -n "${GITHUB_ACTIONS:-}" ]] && echo "::error title=test-prepare ($MODE)::$*"
+    return 0
+}
 
 CONFIG_TXT='# For more options and information see
 dtparam=audio=on
@@ -62,7 +66,11 @@ PY
     if command -v cloud-init >/dev/null; then
         # enable_ssh est une extension Raspberry Pi OS, inconnue du schéma générique
         grep -v '^enable_ssh:' "$b/user-data" > "$W/ud-schema.yaml"
-        cloud-init schema --config-file "$W/ud-schema.yaml" && ok "cloud-init schema (user-data)" || fail "cloud-init schema"
+        if cloud-init schema --config-file "$W/ud-schema.yaml" >"$W/schema.log" 2>&1; then
+            ok "cloud-init schema (user-data)"
+        else
+            fail "cloud-init schema : $(tr '\n' ' ' < "$W/schema.log" | cut -c1-900)"
+        fi
     fi
 }
 
@@ -70,7 +78,9 @@ case "$MODE" in
 bootfs)
     echo "== prepare.sh --bootfs"
     mkdir -p "$W/boot"; printf '%s' "$CONFIG_TXT" > "$W/boot/config.txt"
-    bash "$HERE/prepare.sh" --bootfs "$W/boot" "${COMMON[@]}" >/dev/null
+    if ! bash "$HERE/prepare.sh" --bootfs "$W/boot" "${COMMON[@]}" >"$W/prep.log" 2>&1; then
+        fail "prepare.sh --bootfs : $(tail -n 5 "$W/prep.log" | tr '\n' ' ')"
+    fi
     check_bootfs "$W/boot"
     echo "== seconde exécution (idempotence de config.txt)"
     bash "$HERE/prepare.sh" --bootfs "$W/boot" "${COMMON[@]}" >/dev/null
@@ -93,8 +103,11 @@ dd)
     echo "== écriture sur un périphérique loop"
     truncate -s 128M "$W/target.img"
     T="$(losetup -fP --show "$W/target.img")"; LOOPS+=("$T")
-    PREPARE_ALLOW_LOOP=1 bash "$HERE/prepare.sh" --image "$W/src.img.xz" --device "$T" "${COMMON[@]}" >/dev/null
-    ok "prepare.sh terminé"
+    if PREPARE_ALLOW_LOOP=1 bash "$HERE/prepare.sh" --image "$W/src.img.xz" --device "$T" "${COMMON[@]}" >"$W/prep.log" 2>&1; then
+        ok "prepare.sh terminé"
+    else
+        fail "prepare.sh (dd) : $(tail -n 5 "$W/prep.log" | tr '\n' ' ')"
+    fi
     lsblk -nrpo MOUNTPOINT "$T" | grep -q . && fail "partition encore montée" || ok "tout est démonté"
     partx -u "$T" 2>/dev/null || true
     udevadm settle 2>/dev/null || sleep 2

@@ -15,7 +15,7 @@ jobs:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Syntaxe bash
         run: for f in prepare.sh install.sh bin/pi-server tests/*.sh; do bash -n "$f"; done
       - name: ShellCheck
@@ -25,7 +25,7 @@ jobs:
     name: prepare.sh (bootfs + dd sur loop)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Outils
         run: |
           sudo apt-get update
@@ -39,6 +39,6 @@ jobs:
     name: Pare-feu (nft -c)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: sudo apt-get update && sudo apt-get install -y nftables
       - run: sudo bash tests/test-firewall.sh
