@@ -477,9 +477,19 @@ for _ in $(seq 1 60); do
 done
 
 export DEBIAN_FRONTEND=noninteractive
-APT=(apt-get -o DPkg::Lock::Timeout=900 -y)
-"${APT[@]}" update || fail "apt-get update"
-"${APT[@]}" install git ca-certificates || fail "installation de git"
+APT=(apt-get -o DPkg::Lock::Timeout=900 -o APT::Install-Recommends=false -y)
+# Au premier démarrage, Debian lance aussi sa propre mise à jour des listes
+# (apt-daily) : son verrou n'est pas couvert par DPkg::Lock::Timeout => essais répétés.
+apt_retry() {
+    local _
+    for _ in $(seq 1 60); do
+        "${APT[@]}" "$@" && return 0
+        sleep 10
+    done
+    return 1
+}
+apt_retry update || fail "apt-get update"
+apt_retry install git ca-certificates || fail "installation de git"
 
 if [[ -d /opt/pi-server/.git ]]; then
     git -C /opt/pi-server pull --ff-only || fail "git pull pi-server"
