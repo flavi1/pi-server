@@ -506,19 +506,23 @@ INIT
 fi
 
 # --- Copie sur la partition de boot -----------------------------------------------------
+# sudo seulement si la partition n'est pas déjà accessible en écriture
+# (montée par le bureau dans /media/$USER/bootfs, ou --bootfs sur un dossier à soi)
+BSUDO=""
+[[ -w "$BOOT" && -w "$BOOT/config.txt" ]] || BSUDO="$SUDO"
 info "Écriture des fichiers de premier démarrage"
-$SUDO cp "$STAGE/user-data" "$STAGE/meta-data" "$STAGE/network-config" "$BOOT/"
-$SUDO rm -rf "$BOOT/pi-server"
+$BSUDO cp "$STAGE/user-data" "$STAGE/meta-data" "$STAGE/network-config" "$BOOT/"
+$BSUDO rm -rf "$BOOT/pi-server"
 if [[ "$AUTO" == yes ]]; then
-    $SUDO mkdir -p "$BOOT/pi-server"
-    $SUDO cp "$STAGE/pi-server/pi-server.conf" "$STAGE/pi-server/init.sh" "$BOOT/pi-server/"
+    $BSUDO mkdir -p "$BOOT/pi-server"
+    $BSUDO cp "$STAGE/pi-server/pi-server.conf" "$STAGE/pi-server/init.sh" "$BOOT/pi-server/"
 fi
 
 # --- config.txt : Wi-Fi / Bluetooth ------------------------------------------------------
 CFG="$BOOT/config.txt"
-[[ -f "$CFG.orig" ]] || $SUDO cp "$CFG" "$CFG.orig"
+[[ -f "$CFG.orig" ]] || $BSUDO cp "$CFG" "$CFG.orig"
 # retirer un éventuel bloc précédent
-$SUDO sed -i '/^# >>> pi-server$/,/^# <<< pi-server$/d' "$CFG"
+$BSUDO sed -i '/^# >>> pi-server$/,/^# <<< pi-server$/d' "$CFG"
 {
     echo "# >>> pi-server"
     echo "# Bloc géré par pi-server/prepare.sh (radio). Le serveur de son ajoute"
@@ -527,7 +531,7 @@ $SUDO sed -i '/^# >>> pi-server$/,/^# <<< pi-server$/d' "$CFG"
     [[ "$WIFI" == yes ]] && echo "# Wi-Fi activé" || echo "dtoverlay=disable-wifi"
     [[ "$BT" == yes ]]   && echo "# Bluetooth activé" || echo "dtoverlay=disable-bt"
     echo "# <<< pi-server"
-} | $SUDO tee -a "$CFG" >/dev/null
+} | $BSUDO tee -a "$CFG" >/dev/null
 
 sync
 if [[ -z "$OPT_BOOTFS" ]]; then

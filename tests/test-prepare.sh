@@ -13,7 +13,7 @@ LOOPS=()
 cleanup() {
     for m in "$W"/mnt*; do mountpoint -q "$m" 2>/dev/null && umount "$m"; done
     for l in "${LOOPS[@]}"; do losetup -d "$l" 2>/dev/null || true; done
-    rm -rf "$W"
+    rm -rf "$W" 2>/dev/null || sudo rm -rf "$W"
 }
 trap cleanup EXIT
 FAILS=0
