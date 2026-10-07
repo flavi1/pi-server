@@ -37,7 +37,11 @@ purge_group() {
     [[ ${#pkgs[@]} -gt 0 ]] || { say "$name : rien à retirer"; return 0; }
     local out sim extra missing want
     if ! out="$(apt-get -s purge "${pkgs[@]}" 2>&1)"; then
-        say "$name : ignoré (apt refuse : $(echo "$out" | grep -E '^E:' | head -n1))"
+        if grep -q 'No space left' <<<"$out"; then
+            say "$name : ignoré (carte pleine : sudo apt-get clean, puis relancez)"
+        else
+            say "$name : ignoré (apt refuse : $(echo "$out" | grep -E '^E:' | head -n1))"
+        fi
         return 0
     fi
     sim="$(echo "$out" | awk '/^(Purg|Remv) / {print $2}' | sed 's/:.*//' | sort -u)"
@@ -64,6 +68,15 @@ purge_group() {
 }
 
 echo "Allègement du système (SLIM) :"
+
+# Carte pleine : apt ne peut même pas simuler (il écrit son cache de travail).
+# Les paquets déjà téléchargés (/var/cache/apt/archives) sont toujours retirables.
+if (( $(df -Pm / | awk 'NR==2 {print $4}') < 100 )); then
+    say "moins de 100 Mo libres : vidage du cache des paquets téléchargés (apt-get clean)"
+    apt-get clean
+    rm -f /var/cache/apt/*.bin
+    say "libre maintenant : $(df -Ph / | awk 'NR==2 {print $4}')"
+fi
 
 # 1. Accès à distance via le cloud Raspberry Pi : inutile ici, et une porte en moins
 [[ "${SLIM_RPI_CONNECT:-yes}" == yes ]] && purge_group "Raspberry Pi Connect" 'rpi-connect*'
