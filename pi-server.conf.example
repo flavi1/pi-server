@@ -25,6 +25,7 @@ TIMEZONE="Europe/Paris"
 LOCALE="fr_FR.UTF-8"
 
 # Réseau local autorisé pour SSH et les services « LAN » (vide = détection auto)
+# Plusieurs réseaux : LAN4="192.168.1.0/24, 192.168.0.0/24"
 LAN4=""
 
 # Redémarrage automatique après une mise à jour qui l'exige (noyau, firmware)

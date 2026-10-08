@@ -160,6 +160,44 @@ Les fichiers de configuration (`/etc/pi-server/`, `/etc/pi-sound-server/`,
 - **FTP** (pi-data-server) : le même compte par défaut — voir son README pour un
   compte FTP séparé (`sudo passwd <compte>` pour l'activer).
 
+### Ports ouverts
+
+Tout est refusé en entrée sauf ce qui suit (avec les modules son et données) :
+
+| Port | Service | Module | Accessible depuis |
+|---|---|---|---|
+| 22/tcp | SSH (administration) | pi-server | réseau local |
+| 5353/udp | mDNS (nom `hifi.local`) | pi-server | réseau local |
+| 6680/tcp | Mopidy : interface web Iris (servie par la Pi) et API de pilotage | pi-sound-server | réseau local |
+| 6600/tcp | Mopidy : protocole MPD (applications : M.A.L.P., Cantata…) | pi-sound-server | réseau local |
+| 8080/tcp | fichiers de `/media` en lecture seule (HTTP) | pi-data-server | tous |
+| 21/tcp, 40000-40100/tcp | FTPS (`/incoming` en écriture, `/media` en lecture) | pi-data-server | tous |
+
+Les autres entrées autorisées ne sont pas des services : ping (ICMP), découverte de
+voisins IPv6, client DHCPv6 et les réponses aux connexions ouvertes par la Pi.
+
+« Tous » : la Pi ne filtre pas, c'est la box qui décide d'exposer ou non ces ports sur
+Internet (redirection). Rien n'est redirigé par défaut.
+
+**Réseau local** = `LAN4` (IPv4) et les adresses IPv6 locales (`fe80::/10`,
+`fc00::/7`), dans `/etc/nftables.d/00-lan.nft`. Par défaut, `LAN4` est le sous-réseau
+de l'interface de la Pi relevé à l'installation (par exemple `192.168.1.0/24`). Un
+appareil sur un **autre** sous-réseau (Wi-Fi d'un second routeur…) est refusé : ajoutez
+son réseau dans `/etc/pi-server/pi-server.conf`, puis relancez le socle :
+
+```bash
+LAN4="192.168.1.0/24, 192.168.0.0/24"     # dans /etc/pi-server/pi-server.conf
+sudo bash /opt/pi-server/install.sh
+```
+
+Un réseau Wi-Fi « invité » de la box isole en général les appareils entre eux : la
+Pi y reste injoignable quoi qu'il arrive.
+
+Depuis un navigateur, toujours taper l'adresse complète avec `http://`
+(`http://hifi.local:6680/`) ; sans, certains navigateurs proposent « ouvrir avec… ».
+Sur Android, les noms en `.local` sont souvent inconnus : utiliser l'adresse IP de la
+Pi (`hostname -I`).
+
 ## 6. Contrat avec les modules
 
 Un module est un dépôt git qui contient un `install.sh` :
@@ -180,7 +218,7 @@ Un module est un dépôt git qui contient un `install.sh` :
 | Message « installation automatique a échoué » à la connexion | `less /var/log/pi-server-firstboot.log`, puis `sudo bash /boot/firmware/pi-server/init.sh` |
 | Pas de SSH du tout | câble Ethernet ? attendre 3 min ; sinon brancher écran + clavier, se connecter avec le même utilisateur, puis `hostname -I` et `sudo cloud-init status --long` |
 | `pi-server update` : « git pull a échoué » | modification locale dans `/opt/<dépôt>` : `sudo git -C /opt/<dépôt> status` |
-| Ports d'un module fermés | `sudo nft list ruleset`, `ls /etc/nftables.d/` |
+| Ports d'un module fermés | `sudo nft list ruleset`, `ls /etc/nftables.d/` ; appareil sur un autre sous-réseau : voir « Ports ouverts » (`LAN4`) |
 
 ## 8. Tests et intégration continue
 
